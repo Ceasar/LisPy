@@ -1,6 +1,7 @@
 import math
 import operator as op
 
+
 Symbol = str
 
 
@@ -41,19 +42,13 @@ GLOBAL_ENV.update(
 )
 
 
-def read(s):
+def parse(s):
     "Read a Scheme expression from a string."
-    return read_from(tokenize(s))
-
-parse = read
-
-
-def tokenize(program):
-    """Given a program (string), return a list of tokens."""
-    return program.replace('(', ' ( ').replace(')', ' ) ').split()
+    tokens = s.replace('(', ' ( ').replace(')', ' ) ').split()
+    return _read_from(tokens)
 
 
-def read_from(tokens):
+def _read_from(tokens):
     "Read an expression from a sequence of tokens."
     if len(tokens) == 0:
         raise SyntaxError('unexpected EOF while reading')
@@ -61,30 +56,24 @@ def read_from(tokens):
     if '(' == token:
         L = []
         while tokens[0] != ')':
-            L.append(read_from(tokens))
+            L.append(_read_from(tokens))
         tokens.pop(0)  # pop off ')'
         return L
     elif ')' == token:
         raise SyntaxError('unexpected )')
     else:
-        return atom(token)
-
-
-def atom(token):
-    "Numbers become numbers; every other token is a symbol."
-    try:
-        return int(token)
-    except ValueError:
+        # Numbers become numbers; every other token is a symbol.
         try:
-            return float(token)
+            return int(token)
         except ValueError:
-            return Symbol(token)
+            try:
+                return float(token)
+            except ValueError:
+                return Symbol(token)
 
 
 def eval(exp, env=GLOBAL_ENV):
     """Evaluate a program."""
-    print "eval", exp
-
     # variable reference
     if isinstance(exp, Symbol):
         return env.find(exp)[exp]
@@ -131,16 +120,9 @@ def to_string(exp):
 def repl(prompt='lis.py> '):
     "A prompt-read-eval-print loop."
     while True:
-        inp = raw_input(prompt)
-        if inp == "env":
-            print GLOBAL_ENV
-            continue
-        parsed = parse(inp)
-        print parsed
+        parsed = parse(raw_input(prompt))
         try:
             val = eval(parsed)
-        except AttributeError as e:
-            print "variable not defined"
         except Exception as e:
             print e
         else:
