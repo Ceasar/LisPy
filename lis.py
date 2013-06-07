@@ -1,6 +1,8 @@
 import logging
 import operator as op
 
+# TODO: If we are super lazy about evaluation and stored function needs to be
+# called with what arguments, we can figure out what to memoize
 
 Symbol = str
 
@@ -75,25 +77,22 @@ def parse(tokens):
     """"
     Read an expression from a sequence of tokens.
 
-    >>> list(parse(lex("(do (:= x 1) x)")))
+    >>> parse(lex("1"))
+    1
+    >>> parse(lex("(:= x 1)"))
+    [':=', 'x', 1]
+    >>> parse(lex("(do (:= x 1) x)"))
     ['do', [':=', 'x', 1], 'x']
     """
-    stack = [[]]
-    parens = 0
-
-    for token in tokens:
-        if token == '(':
-            parens += 1
-            stack.append([])
-        elif token == ')':
-            parens -= 1
-            if parens < 0:
-                raise SyntaxError('unexpected )')
-            scope = stack.pop()
-            stack[-1].append(scope)
-        else:
-            stack[-1].append(token)
-    return stack[-1][0]
+    def scan(tokens):
+        for token in tokens:
+            if token == '(':
+                yield list(scan(tokens))
+            elif token == ')':
+                break
+            else:
+                yield token
+    return next(scan(tokens))
 
 
 def eval(exp, env=GLOBAL_ENV):
@@ -105,6 +104,10 @@ def eval(exp, env=GLOBAL_ENV):
     >>> eval(parse(lex("(:= x 1)")))
     >>> eval(parse(lex("(do (:= x 1) x)")))
     1
+    >>> eval(parse(lex("(if (== 0 0) 1 2)")))
+    1
+    >>> eval(parse(lex("(if (== 1 0) 1 2)")))
+    2
     """
     if __debug__:
         if env == GLOBAL_ENV:
@@ -114,10 +117,7 @@ def eval(exp, env=GLOBAL_ENV):
 
     # variable reference
     if isinstance(exp, Symbol):
-        if exp == "[]":
-            return []
-        else:
-            return env.find(exp)[exp]
+        return [] if exp == "[]" else env.find(exp)[exp]
     # constant literal
     elif not isinstance(exp, list):
         return exp
