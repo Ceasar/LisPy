@@ -51,6 +51,17 @@ GLOBAL_ENV.update(
 )
 
 
+def atom(token):
+    """Convert a token into an atom."""
+    try:
+        return int(token)
+    except ValueError:
+        try:
+            return float(token)
+        except ValueError:
+            return token
+
+
 def lex(s):
     """
     Parse tokens from a string.
@@ -68,13 +79,7 @@ def lex(s):
 
     # Numbers become numbers; every other token is a symbol.
     for token in tokens:
-        try:
-            yield int(token)
-        except ValueError:
-            try:
-                yield float(token)
-            except ValueError:
-                yield token
+        yield atom(token)
 
 
 def parse(tokens):
@@ -90,15 +95,17 @@ def parse(tokens):
     >>> parse(iter(['(', 'if', '(', '==', 0, 0, ')', 1, 2, ')']))
     ['if', ['==', 0, 0], 1, 2]
     """
-    def scan(tokens):
+    def parse_expression(tokens):
+        expression = []
         for token in tokens:
             if token == '(':
-                yield list(scan(tokens))
+                expression.append(parse_expression(tokens))
             elif token == ')':
                 break
             else:
-                yield token
-    return next(scan(tokens))
+                expression.append(token)
+        return expression
+    return parse_expression(tokens)[0]
 
 
 def eval(exp, env=GLOBAL_ENV):
