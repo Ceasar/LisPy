@@ -57,8 +57,12 @@ def lex(s):
 
     A token is either a parenthesis or a string.
 
+    >>> list(lex("(:= x 1)"))
+    ['(', ':=', 'x', 1, ')']
     >>> list(lex("(do (:= x 1) x)"))
     ['(', 'do', '(', ':=', 'x', 1, ')', 'x', ')']
+    >>> list(lex("(if (== 0 0) 1 2)"))
+    ['(', 'if', '(', '==', 0, 0, ')', 1, 2, ')']
     """
     tokens = s.replace('(', ' ( ').replace(')', ' ) ').split()
 
@@ -77,12 +81,14 @@ def parse(tokens):
     """"
     Read an expression from a sequence of tokens.
 
-    >>> parse(lex("1"))
+    >>> parse(iter([1]))
     1
-    >>> parse(lex("(:= x 1)"))
+    >>> parse(iter(['(', ':=', 'x', 1, ')']))
     [':=', 'x', 1]
-    >>> parse(lex("(do (:= x 1) x)"))
+    >>> parse(iter(['(', 'do', '(', ':=', 'x', 1, ')', 'x', ')']))
     ['do', [':=', 'x', 1], 'x']
+    >>> parse(iter(['(', 'if', '(', '==', 0, 0, ')', 1, 2, ')']))
+    ['if', ['==', 0, 0], 1, 2]
     """
     def scan(tokens):
         for token in tokens:
@@ -99,14 +105,14 @@ def eval(exp, env=GLOBAL_ENV):
     """
     Evaluate a program.
 
-    >>> eval(parse(lex("1")))
+    >>> eval(1)
     1
-    >>> eval(parse(lex("(:= x 1)")))
-    >>> eval(parse(lex("(do (:= x 1) x)")))
+    >>> eval([':=', 'x', 1])
+    >>> eval(['do', [':=', 'x', 1], 'x'])
     1
-    >>> eval(parse(lex("(if (== 0 0) 1 2)")))
+    >>> eval(['if', ['==', 0, 0], 1, 2])
     1
-    >>> eval(parse(lex("(if (== 1 0) 1 2)")))
+    >>> eval(['if', ['==', 0, 1], 1, 2])
     2
     """
     if __debug__:
