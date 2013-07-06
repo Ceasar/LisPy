@@ -1,7 +1,7 @@
 import operator as op
 
 from analysis import parse, lex
-from synthesis import eval, Environment
+from environment import Environment
 
 
 GLOBAL_ENV = Environment()
@@ -39,7 +39,7 @@ def to_string(exp):
 
 
 def run(program, env):
-    return eval(parse(lex(program)), env)
+    return parse(lex(program)).eval(env)
 
 
 def repl(prompt='lis.py> '):
