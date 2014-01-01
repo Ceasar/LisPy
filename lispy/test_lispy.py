@@ -1,7 +1,9 @@
+import operator
+
 import pytest
 
 from analysis import interpret
-from synthesis import Environment as Env
+from synthesis import Environment
 
 
 @pytest.fixture(params=["2", "(+ 2 2)"])
@@ -15,7 +17,7 @@ def tokens(program):
 
 @pytest.fixture()
 def environment():
-    return Env(("x",), (10,))
+    return Environment(["*"], [operator.mul])
 
 
 def test_evaluate_constant_literal():
@@ -36,3 +38,8 @@ def test_evaluate_define():
 
 def test_evaluate_set():
     assert interpret("(begin (define x 2) (set! x 3) x)").evaluate() == 3
+
+
+def test_define_procedure(environment):
+    program = "(begin (define (square x) (* x x)) (square 10))"
+    assert interpret(program).evaluate(environment) == 100

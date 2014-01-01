@@ -7,7 +7,11 @@ def do_if(environment, test, consequence, alternative):
     return result.evaluate(environment)
 
 def do_define(environment, name, value):
-    environment[name] = value.evaluate(environment)
+    try:
+        environment[name.operator] = lambda *args: (
+            value.evaluate(Environment(name.operands, args, environment)))
+    except AttributeError:
+        environment[name] = value.evaluate(environment)
 
 def do_begin(environment, *expressions):
     for expression in expressions:
@@ -35,7 +39,7 @@ class Atom(object):
         except NameError:
             try:
                 return int(self.name)
-            except nameError:
+            except NameError:
                 return float(self.name)
 
     def __hash__(self):
