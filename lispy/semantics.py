@@ -79,7 +79,5 @@ class Combination(object):
             return self.operands
         # procedure call
         else:
-            f = self.operator.evaluate(environment)
-            print self
-            print f
-            return f(*list(self.get_arguments(environment)))
+            procedure = self.operator.evaluate(environment)
+            return procedure(*self.get_arguments(environment))
