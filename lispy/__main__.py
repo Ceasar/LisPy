@@ -1,10 +1,10 @@
 import operator as op
 
-from analysis import parse, lex
-from synthesis import eval, Environment
+from context import Context
+from interpreter import interpret
 
 
-GLOBAL_ENV = Environment()
+GLOBAL_ENV = Context()
 GLOBAL_ENV.update(
     {'+': op.add,
      '-': op.sub,
@@ -38,15 +38,11 @@ def to_string(exp):
             if isinstance(exp, list) else str(exp))
 
 
-def run(program, env):
-    return eval(parse(lex(program)), env)
-
-
 def repl(prompt='lis.py> '):
     "A prompt-read-eval-print loop."
     while True:
         try:
-            val = run(raw_input(prompt), GLOBAL_ENV)
+            val = interpret(raw_input(prompt), GLOBAL_ENV)
         except (EOFError, SystemExit):
             break
         except (Exception, KeyboardInterrupt) as e:
@@ -66,4 +62,4 @@ if __name__ == "__main__":
         repl()
     else:
         with open(sys.argv[1]) as f:
-            print run(f.read(), GLOBAL_ENV)
+            print interpret(f.read(), GLOBAL_ENV)
