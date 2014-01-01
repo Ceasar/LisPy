@@ -40,10 +40,6 @@ class Combination(object):
     def operands(self):
         return self.elements[1:]
 
-    @property
-    def is_atom(self):
-        return len(self.operands) == 0
-
     def __str__(self):
         return "(%s)" % " ".join(str(e) for e in self.elements)
 
