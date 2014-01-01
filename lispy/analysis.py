@@ -62,7 +62,3 @@ def parse(tokens):
     ['if', ['==', 0, 0], 1, 2]
     """
     return _parse_expression(tokens).elements[0]
-
-
-def interpret(program):
-    return parse(lex(program))

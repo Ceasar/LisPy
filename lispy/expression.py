@@ -6,9 +6,7 @@ class Atom(object):
     def __init__(self, name):
         self.name = name
 
-    def evaluate(self, context=None):
-        if context is None:
-            context = Context()
+    def evaluate(self, context):
         try:
             return context.find(self.name)[self.name]
         except NameError:
@@ -52,10 +50,7 @@ class Combination(object):
     def __repr__(self):
         return str(self)
 
-    def evaluate(self, context=None):
-        if context is None:
-            context = Context()
-
+    def evaluate(self, context):
         try:
             return BUILTINS[self.operator.name](context, *self.operands)
         except KeyError:
