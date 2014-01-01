@@ -8,12 +8,12 @@ class Atom(object):
 
     def evaluate(self, context):
         try:
-            return context.find(self.name)[self.name]
-        except NameError:
+            return int(self.name)
+        except ValueError:
             try:
-                return int(self.name)
-            except NameError:
                 return float(self.name)
+            except ValueError:
+                return context.find(self.name)[self.name]
 
     def __hash__(self):
         return hash(self.name)
