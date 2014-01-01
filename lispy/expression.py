@@ -30,6 +30,9 @@ class Combination(object):
     def operands(self):
         return self.elements[1:]
 
+    def __eq__(self, other):
+        return self.elements == other.elements
+
     def __str__(self):
         return "(%s)" % " ".join(str(e) for e in self.elements)
 
