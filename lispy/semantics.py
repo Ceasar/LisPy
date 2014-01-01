@@ -1,6 +1,28 @@
 from synthesis import Environment
 
 
+
+def do_if(environment, test, consequence, alternative):
+    result = (consequence if test.evaluate(environment) else alternative)
+    return result.evaluate(environment)
+
+def do_define(environment, name, value):
+    environment[name.value] = value.evaluate(environment)
+
+def do_begin(environment, *expressions):
+    for expression in expressions:
+        value = expression.evaluate(environment)
+    return value
+
+
+BUILTINS = {
+    "if": do_if,
+    "define": do_define,
+    "set!": do_define,
+    "begin": do_begin,
+}
+
+
 class Atom(object):
     def __init__(self, value):
         self.value = value
@@ -38,9 +60,6 @@ class Combination(object):
     def operands(self):
         return self.elements[1:]
 
-    def get_arguments(self, environment):
-        return (operand.evaluate(environment) for operand in self.operands)
-
     @property
     def is_atom(self):
         return len(self.operands) == 0
@@ -55,29 +74,9 @@ class Combination(object):
         if environment is None:
             environment = Environment()
 
-        # conditional
-        if self.operator == "if":
-            test, conseq, alt = self.operands
-            result = (conseq if test.evaluate(environment) else alt)
-            return result.evaluate(environment)
-        # definition
-        elif self.operator == "define" or self.operator == "set!":
-            name, value = self.operands
-            environment[name.value] = value.evaluate(environment)
-        # procedure
-        elif self.operator == "\\":
-            (_, vars, self) = self
-            eoperands = self.operands
-            return lambda *eoperands: self.evaluate(self, Environment(vars, self.operands, environment))
-        # sequencing
-        elif self.operator == "begin":
-            for expr in self.operands:
-                val = expr.evaluate(environment)
-            return val
-        # quotation
-        elif self.operator == "quote":
-            return self.operands
-        # procedure call
-        else:
+        try:
+            return BUILTINS[self.operator.value](environment, *self.operands)
+        except KeyError:
             procedure = self.operator.evaluate(environment)
-            return procedure(*self.get_arguments(environment))
+            arguments = (operand.evaluate(environment) for operand in self.operands)
+            return procedure(*arguments)
