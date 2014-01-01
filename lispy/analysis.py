@@ -11,17 +11,18 @@ the source program and stores it in a data structure called a symbol table,
 which is passed along with the intermediate representation to the synthesis
 part.
 """
+from semantics import Atom, Combination
 
 
 def atom(token):
     """Convert a token into an atom."""
     try:
-        return int(token)
+        return Atom(int(token))
     except ValueError:
         try:
-            return float(token)
+            return Atom(float(token))
         except ValueError:
-            return token
+            return Atom(token)
 
 
 def lex(s):
@@ -41,19 +42,22 @@ def lex(s):
 
     # Numbers become numbers; every other token is a symbol.
     for token in tokens:
-        yield atom(token)
+        if token in ('(', ')'):
+            yield token
+        else:
+            yield atom(token)
 
 
 def _parse_expression(tokens):
-    expression = []
+    elements = []
     for token in tokens:
         if token == '(':
-            expression.append(_parse_expression(tokens))
+            elements.append(_parse_expression(tokens))
         elif token == ')':
             break
         else:
-            expression.append(token)
-    return expression
+            elements.append(token)
+    return Combination(elements)
 
 def parse(tokens):
     """"
@@ -68,7 +72,7 @@ def parse(tokens):
     >>> parse(iter(['(', 'if', '(', '==', 0, 0, ')', 1, 2, ')']))
     ['if', ['==', 0, 0], 1, 2]
     """
-    return _parse_expression(tokens)[0]
+    return _parse_expression(tokens).elements[0]
 
 
 def interpret(program):
