@@ -7,7 +7,7 @@ def do_if(environment, test, consequence, alternative):
     return result.evaluate(environment)
 
 def do_define(environment, name, value):
-    environment[name.value] = value.evaluate(environment)
+    environment[name] = value.evaluate(environment)
 
 def do_begin(environment, *expressions):
     for expression in expressions:
@@ -24,25 +24,28 @@ BUILTINS = {
 
 
 class Atom(object):
-    def __init__(self, value):
-        self.value = value
+    def __init__(self, name):
+        self.name = name
 
     def evaluate(self, environment=None):
         if environment is None:
             environment = Environment()
+        try:
+            return environment.find(self.name)[self.name]
+        except NameError:
+            try:
+                return int(self.name)
+            except nameError:
+                return float(self.name)
 
-        # variable reference
-        if isinstance(self.value, str):
-            return environment.find(self.value)[self.value]
-        # constant literal
-        else:
-            return self.value
+    def __hash__(self):
+        return hash(self.name)
 
     def __eq__(self, other):
-        return self.value == other
+        return self.name == other
 
     def __str__(self):
-        return str(self.value)
+        return str(self.name)
 
     def __repr__(self):
         return str(self)
@@ -75,7 +78,7 @@ class Combination(object):
             environment = Environment()
 
         try:
-            return BUILTINS[self.operator.value](environment, *self.operands)
+            return BUILTINS[self.operator.name](environment, *self.operands)
         except KeyError:
             procedure = self.operator.evaluate(environment)
             arguments = (operand.evaluate(environment) for operand in self.operands)

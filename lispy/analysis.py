@@ -14,17 +14,6 @@ part.
 from semantics import Atom, Combination
 
 
-def atom(token):
-    """Convert a token into an atom."""
-    try:
-        return Atom(int(token))
-    except ValueError:
-        try:
-            return Atom(float(token))
-        except ValueError:
-            return Atom(token)
-
-
 def lex(s):
     """
     Parse tokens from a string.
@@ -45,7 +34,7 @@ def lex(s):
         if token in ('(', ')'):
             yield token
         else:
-            yield atom(token)
+            yield Atom(token)
 
 
 def _parse_expression(tokens):
