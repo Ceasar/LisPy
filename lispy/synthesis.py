@@ -24,20 +24,23 @@ class Environment(dict):
                 raise NameError("name '%s' is not defined" % var)
 
 
-def eval(exp, env):
+def evaluate(exp, env=None):
     """
     Evaluate a program.
 
-    >>> eval(1)
+    >>> evaluate(1)
     1
-    >>> eval([':=', 'x', 1])
-    >>> eval(['do', [':=', 'x', 1], 'x'])
+    >>> evaluate(['define 'x', 1])
+    >>> evaluate(['do', ['define 'x', 1], 'x'])
     1
-    >>> eval(['if', ['==', 0, 0], 1, 2])
+    >>> evaluate(['if', ['==', 0, 0], 1, 2])
     1
-    >>> eval(['if', ['==', 0, 1], 1, 2])
+    >>> evaluate(['if', ['==', 0, 1], 1, 2])
     2
     """
+    if env is None:
+        env = Environment()
+
     # variable reference
     if isinstance(exp, str):
         return [] if exp == "[]" else env.find(exp)[exp]
@@ -45,29 +48,37 @@ def eval(exp, env):
     elif not isinstance(exp, list):
         return exp
     else:
-        keyword, args = exp[0], exp[1:]
+        operator, args = exp[0], exp[1:]
         # conditional
-        if keyword == "if":
+        if operator == "if":
             test, conseq, alt = args
-            return eval(conseq if eval(test, env) else alt, env)
+            return evaluate(conseq if evaluate(test, env) else alt, env)
         # definition
-        elif keyword == ":=":
-            var, expr = args
-            env[var] = eval(expr, env)
+        elif operator == "define":
+            variable, expression = args
+            env[variable] = evaluate(expression, env)
+        elif operator == "set!":
+            variable, expression = args
+            env[variable] = evaluate(expression, env)
         # procedure
-        elif keyword == "\\":
+        elif operator == "\\":
             (_, vars, exp) = exp
-            return lambda *args: eval(exp, Environment(vars, args, env))
+            return lambda *args: evaluate(exp, Environment(vars, args, env))
         # sequencing
-        elif keyword == "do":
+        elif operator == "do":
             for expr in args:
-                val = eval(expr, env)
+                val = evaluate(expr, env)
             return val
         # quotation
-        elif keyword == "quote":
+        elif operator == "quote":
             return args
+        elif operator == "begin":
+            e = None
+            for arg in args:
+                e = evaluate(arg, env)
+            return e
         # procedure call
         else:
-            f = eval(keyword, env)
-            xargs = list(eval(arg, env) for arg in args)
+            f = evaluate(operator, env)
+            xargs = list(evaluate(arg, env) for arg in args)
             return f(*xargs)

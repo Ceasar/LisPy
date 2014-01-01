@@ -44,6 +44,17 @@ def lex(s):
         yield atom(token)
 
 
+def _parse_expression(tokens):
+    expression = []
+    for token in tokens:
+        if token == '(':
+            expression.append(_parse_expression(tokens))
+        elif token == ')':
+            break
+        else:
+            expression.append(token)
+    return expression
+
 def parse(tokens):
     """"
     Read an expression from a sequence of tokens.
@@ -57,14 +68,8 @@ def parse(tokens):
     >>> parse(iter(['(', 'if', '(', '==', 0, 0, ')', 1, 2, ')']))
     ['if', ['==', 0, 0], 1, 2]
     """
-    def parse_expression(tokens):
-        expression = []
-        for token in tokens:
-            if token == '(':
-                expression.append(parse_expression(tokens))
-            elif token == ')':
-                break
-            else:
-                expression.append(token)
-        return expression
-    return parse_expression(tokens)[0]
+    return _parse_expression(tokens)[0]
+
+
+def interpret(program):
+    return parse(lex(program))
