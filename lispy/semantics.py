@@ -1,21 +1,22 @@
+from expression import Atom
 from context import Context
 
 
 
 def do_if(context, test, consequence, alternative):
-    result = (consequence if test.evaluate(context) else alternative)
-    return result.evaluate(context)
+    result = (consequence if evaluate(test, context) else alternative)
+    return evaluate(result, context)
 
 def do_define(context, name, value):
     try:
         context[name.operator] = lambda *args: (
-            value.evaluate(Context(name.operands, args, context)))
+            evaluate(value, Context(name.operands, args, context)))
     except AttributeError:
-        context[name] = value.evaluate(context)
+        context[name] = evaluate(value, context)
 
 def do_begin(context, *expressions):
     for expression in expressions:
-        value = expression.evaluate(context)
+        value = evaluate(expression, context)
     return value
 
 
@@ -27,3 +28,21 @@ BUILTINS = {
 }
 
 
+def evaluate(expression, context):
+    if type(expression) == Atom:
+        try:
+            return int(expression.name)
+        except ValueError:
+            try:
+                return float(expression.name)
+            except ValueError:
+                return context.find(expression.name)[expression.name]
+    else:
+        if len(expression.elements) == 0:
+            return []
+        try:
+            return BUILTINS[expression.operator.name](context, *expression.operands)
+        except KeyError:
+            procedure = evaluate(expression.operator, context)
+            arguments = (evaluate(operand, context) for operand in expression.operands)
+            return procedure(*arguments)
