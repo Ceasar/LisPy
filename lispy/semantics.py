@@ -1,21 +1,21 @@
-from synthesis import Environment
+from context import Context
 
 
 
-def do_if(environment, test, consequence, alternative):
-    result = (consequence if test.evaluate(environment) else alternative)
-    return result.evaluate(environment)
+def do_if(context, test, consequence, alternative):
+    result = (consequence if test.evaluate(context) else alternative)
+    return result.evaluate(context)
 
-def do_define(environment, name, value):
+def do_define(context, name, value):
     try:
-        environment[name.operator] = lambda *args: (
-            value.evaluate(Environment(name.operands, args, environment)))
+        context[name.operator] = lambda *args: (
+            value.evaluate(Context(name.operands, args, context)))
     except AttributeError:
-        environment[name] = value.evaluate(environment)
+        context[name] = value.evaluate(context)
 
-def do_begin(environment, *expressions):
+def do_begin(context, *expressions):
     for expression in expressions:
-        value = expression.evaluate(environment)
+        value = expression.evaluate(context)
     return value
 
 
@@ -31,11 +31,11 @@ class Atom(object):
     def __init__(self, name):
         self.name = name
 
-    def evaluate(self, environment=None):
-        if environment is None:
-            environment = Environment()
+    def evaluate(self, context=None):
+        if context is None:
+            context = Context()
         try:
-            return environment.find(self.name)[self.name]
+            return context.find(self.name)[self.name]
         except NameError:
             try:
                 return int(self.name)
@@ -77,13 +77,13 @@ class Combination(object):
     def __repr__(self):
         return str(self)
 
-    def evaluate(self, environment=None):
-        if environment is None:
-            environment = Environment()
+    def evaluate(self, context=None):
+        if context is None:
+            context = Context()
 
         try:
-            return BUILTINS[self.operator.name](environment, *self.operands)
+            return BUILTINS[self.operator.name](context, *self.operands)
         except KeyError:
-            procedure = self.operator.evaluate(environment)
-            arguments = (operand.evaluate(environment) for operand in self.operands)
+            procedure = self.operator.evaluate(context)
+            arguments = (operand.evaluate(context) for operand in self.operands)
             return procedure(*arguments)
