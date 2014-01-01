@@ -11,7 +11,7 @@ the source program and stores it in a data structure called a symbol table,
 which is passed along with the intermediate representation to the synthesis
 part.
 """
-from semantics import Atom, Combination
+from expression import Atom, Combination
 
 
 def lex(s):
