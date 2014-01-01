@@ -47,6 +47,8 @@ class Combination(object):
         return str(self)
 
     def evaluate(self, context):
+        if len(self.elements) == 0:
+            return []
         try:
             return BUILTINS[self.operator.name](context, *self.operands)
         except KeyError:
