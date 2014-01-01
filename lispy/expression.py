@@ -9,10 +9,13 @@ class Atom(object):
         return hash(self.name)
 
     def __eq__(self, other):
-        return self.name == other
+        try:
+            return self.name == other.name
+        except AttributeError:
+            return False
 
     def __str__(self):
-        return str(self.name)
+        return "`%s`" % str(self.name)
 
     def __repr__(self):
         return str(self)
@@ -31,7 +34,10 @@ class Combination(object):
         return self.elements[1:]
 
     def __eq__(self, other):
-        return self.elements == other.elements
+        try:
+            return self.elements == other.elements
+        except AttributeError:
+            return False
 
     def __str__(self):
         return "(%s)" % " ".join(str(e) for e in self.elements)

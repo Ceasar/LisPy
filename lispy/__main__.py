@@ -1,35 +1,7 @@
-import operator as op
 
 from context import Context
-from interpreter import interpret
+from interpreter import interpret, GLOBAL_ENV
 
-
-GLOBAL_ENV = Context()
-GLOBAL_ENV.update(
-    {'+': op.add,
-     '-': op.sub,
-     '*': op.mul,
-     '/': op.div,
-     'not': op.not_,
-     '>': op.gt,
-     '<': op.lt,
-     '>=': op.ge,
-     '<=': op.le,
-     '==': op.eq,
-     '/=': op.ne,
-     'eq?': op.is_,
-     'length': len,
-     ':': lambda x, y: [x] + y,
-     'head': lambda x: x[0],
-     'tail': lambda x: x[1:],
-     'append': op.add,
-     'list': lambda *x: list(x),
-     'list?': lambda x: isinstance(x, list),
-     'null?': lambda x: x == [],
-     'symbol?': lambda x: isinstance(x, str),
-     'map': lambda f, xs: [f(x) for x in xs],
-     }
-)
 
 
 def to_string(exp):
