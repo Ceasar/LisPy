@@ -15,7 +15,7 @@ class Atom(object):
             return False
 
     def __str__(self):
-        return "`%s`" % str(self.name)
+        return "%s" % str(self.name)
 
     def __repr__(self):
         return str(self)

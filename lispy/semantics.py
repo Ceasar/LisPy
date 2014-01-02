@@ -46,32 +46,6 @@ def substitute(expression, context):
         return Combination(list(substitute(element, context)
                                 for element in expression.elements))
 
-"""
-def evaluate(expression, context):
-    values = deque()
-    while expression:
-        try:
-            value = get_value(expression, context)
-        except ValueError:
-            pass
-        else:
-            values.appendleft(value)
-    arguments = deque()
-    while len(values) > 1:
-        value = values.pop()
-        if callable(value):
-            procedure = value
-            print procedure, arguments
-            values.append(procedure(*arguments))
-            arguments.clear()
-        else:
-            arguments.appendleft(value)
-    if arguments:
-        return values[0](*arguments)
-    else:
-        return values[0]
-"""
-
 
 def evaluate_one(expression, context):
     if type(expression) == Atom:
@@ -85,12 +59,11 @@ def evaluate_one(expression, context):
     else:
         if len(expression.elements) == 0:
             return []
-        if expression.operator == Atom("define"):
+        elif expression.operator == Atom("define"):
             try:
                 signature, body = expression.operands
                 name, parameters = signature.operator, signature.operands
-                f = Function(parameters, body)
-                context[name] = f
+                context[name] = Function(parameters, body)
             except AttributeError:
                 name, value = expression.operands
                 context[name] = value
@@ -98,6 +71,11 @@ def evaluate_one(expression, context):
             for e in expression.operands:
                 val = evaluate(e, context)
             return val
+        elif expression.operator == Atom(":"):
+            x, xs = expression.operands
+            ys = evaluate(xs, context)
+            ys.append(evaluate(x, context))
+            return ys
         elif expression.operator == Atom("if"):
             test, consequence, alternative = expression.operands
             return consequence if evaluate(test, context) else alternative
@@ -122,8 +100,9 @@ def evaluate_one(expression, context):
 def evaluate(expression, context):
     # TODO: Do this in a more robust way
     while True:
-        if expression is None or type(expression) == int:
+        if expression is None or type(expression) in (int, list):
             return expression
         else:
-            print expression
+            # print "=" * 80
+            # print expression
             expression = evaluate_one(expression, context)

@@ -7,5 +7,5 @@
   (define (divides a b) (== (% a b) 0))
   (define (xrange n i l) (if (== n i) l (xrange n (+ i 1) (: i l))))
   (define (range n) (xrange n 0 ())
-  (sum (range 10))
+  (sum (range 100))
 )

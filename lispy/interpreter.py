@@ -12,10 +12,4 @@ def interpret(program, context=None):
         context = Context()
     return evaluate(parse(lex(program)), context)
 
-def append(xs, x):
-    return []
-
 GLOBAL_ENV = Context()
-GLOBAL_ENV.update({
-    Atom(':'): append,
-})
