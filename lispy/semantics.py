@@ -104,7 +104,7 @@ def _reduce(expression, context):
                     procedure = expression.operator
                 return procedure(*expression.operands)
         else:
-            return Combination([reduce(element, context)
+            return Combination([_reduce(element, context)
                                 for element in expression.elements])
         
 def reduce(expression, context):
