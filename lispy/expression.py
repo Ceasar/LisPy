@@ -14,8 +14,11 @@ class Atom(object):
         except AttributeError:
             return False
 
+    def __neq__(self, other):
+        return not self == other
+
     def __str__(self):
-        return "%s" % str(self.name)
+        return "`%s`" % str(self.name)
 
     def __repr__(self):
         return str(self)
@@ -23,7 +26,11 @@ class Atom(object):
 
 class Combination(object):
     def __init__(self, elements):
-        self.elements = elements
+        self._elements = elements
+
+    @property
+    def elements(self):
+        return self._elements
 
     @property
     def operator(self):
@@ -38,6 +45,9 @@ class Combination(object):
             return self.elements == other.elements
         except AttributeError:
             return False
+
+    def __neq__(self, other):
+        return not self == other
 
     def __str__(self):
         return "(%s)" % " ".join(str(e) for e in self.elements)

@@ -47,62 +47,81 @@ def substitute(expression, context):
                                 for element in expression.elements))
 
 
-def evaluate_one(expression, context):
+def _reduce(expression, context):
     if type(expression) == Atom:
         try:
-            return int(expression.name)
-        except ValueError:
-            try:
-                return float(expression.name)
-            except ValueError:
-                return context.find(expression)[expression]
+            return context.find(expression)[expression]
+        except NameError:
+            return expression
+    elif type(expression) == Function:
+        return expression
+    elif len(expression.elements) == 0:
+        return expression
     else:
-        if len(expression.elements) == 0:
-            return []
-        elif expression.operator == Atom("define"):
+        if expression.operator == Atom("define"):
             try:
                 signature, body = expression.operands
                 name, parameters = signature.operator, signature.operands
                 context[name] = Function(parameters, body)
+                return name
             except AttributeError:
                 name, value = expression.operands
                 context[name] = value
-        elif expression.operator == Atom("begin"):
-            for e in expression.operands:
-                val = evaluate(e, context)
-            return val
-        elif expression.operator == Atom(":"):
-            x, xs = expression.operands
-            ys = evaluate(xs, context)
-            ys.append(evaluate(x, context))
-            return ys
+                return name
         elif expression.operator == Atom("if"):
             test, consequence, alternative = expression.operands
-            return consequence if evaluate(test, context) else alternative
-        elif expression.operator == Atom("+"):
-            i, j = expression.operands
-            result = str(evaluate(i, context) + evaluate(j, context))
-            return Atom(result)
-        elif expression.operator == Atom("*"):
-            i, j = expression.operands
-            result = str(evaluate(i, context) * evaluate(j, context))
-            return Atom(result)
-        elif expression.operator == Atom("=="):
-            x, y = expression.operands
-            if evaluate(x, context) == evaluate(y, context):
-                return TRUE
+            return consequence if reduce(test, context) == TRUE else alternative
+        elif all(type(element) in (Atom, Function) for element in expression.operands): 
+            if expression.operator == Atom("begin"):
+                return expression.operands[-1]
+            elif expression.operator == Atom(":"):
+                x, xs = expression.operands
+                ys = evaluate(xs, context)
+                ys.append(evaluate(x, context))
+                return ys
+            elif expression.operator == Atom("+"):
+                i, j = expression.operands
+                result = str(evaluate_one(i) + evaluate_one(j))
+                return Atom(result)
+            elif expression.operator == Atom("-"):
+                i, j = expression.operands
+                result = str(evaluate_one(i) - evaluate_one(j))
+                return Atom(result)
+            elif expression.operator == Atom("*"):
+                i, j = expression.operands
+                result = str(evaluate_one(i) * evaluate_one(j))
+                return Atom(result)
+            elif expression.operator == Atom("=="):
+                x, y = expression.operands
+                if x == y:
+                    return TRUE
+                else:
+                    return FALSE
             else:
-                return FALSE
+                try:
+                    procedure = context.find(expression.operator)[expression.operator]
+                except NameError:
+                    procedure = expression.operator
+                return procedure(*expression.operands)
         else:
-            procedure = context[expression.operator]
-            return procedure(*expression.operands)
+            return Combination([reduce(element, context)
+                                for element in expression.elements])
+        
+def reduce(expression, context):
+    last_expression = expression
+    while True:
+        expression = _reduce(expression, context)
+        if expression == last_expression:
+            return expression
+        last_expression = expression
+
+
+def evaluate_one(expression):
+    if type(expression) == Atom:
+        return int(expression.name)
+    else:
+        return expression.elements
 
 def evaluate(expression, context):
-    # TODO: Do this in a more robust way
-    while True:
-        if expression is None or type(expression) in (int, list):
-            return expression
-        else:
-            # print "=" * 80
-            # print expression
-            expression = evaluate_one(expression, context)
+    reduced = reduce(expression, context)
+    return evaluate_one(reduced)
