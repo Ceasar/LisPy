@@ -3,6 +3,32 @@ from collections import deque
 from expression import Atom, Combination
 from context import Context
 
+def tail_recursive(func):
+    """
+    Create a tail recursive function.
+
+    The new function will not lengthen the call stack and so avoids issues
+    with Python's recursion limit.
+
+    To gain this functionality, the decorated function must be a generator.
+    This makes recursive calls lazy.
+
+    NOTE: This is not a decorator. The function must be able to call itself
+    directly. Usage should look something like:
+
+        def _fact(n, r=1):
+            yield r if n == 0 else _fact(n - 1, n * r)
+        fact = tail_recursive(_fact)
+    """
+    def wrapped(*args, **kwargs):
+        g = func(*args, **kwargs)
+        try:
+            while True:
+                g = next(g)
+        except TypeError:  # g is not an iterator
+            return g
+    return wrapped
+
 
 TRUE = Atom("1")
 FALSE = Atom("0")
@@ -50,70 +76,60 @@ def substitute(expression, context):
 def _reduce(expression, context):
     if type(expression) == Atom:
         try:
-            return context.find(expression)[expression]
+            yield context.find(expression)[expression]
         except NameError:
-            return expression
+            yield expression
     elif type(expression) == Function:
-        return expression
+        yield expression
     elif len(expression.elements) == 0:
-        return expression
+        yield expression
     else:
         if expression.operator == Atom("define"):
             try:
                 signature, body = expression.operands
                 name, parameters = signature.operator, signature.operands
                 context[name] = Function(parameters, body)
-                return name
+                yield name
             except AttributeError:
                 name, value = expression.operands
                 context[name] = value
-                return name
+                yield name
         elif expression.operator == Atom("if"):
             test, consequence, alternative = expression.operands
-            return consequence if reduce(test, context) == TRUE else alternative
+            yield consequence if reduce(test, context) == TRUE else alternative
         elif all(type(element) in (Atom, Function) for element in expression.operands): 
             if expression.operator == Atom("begin"):
-                return expression.operands[-1]
+                yield expression.operands[-1]
             elif expression.operator == Atom(":"):
                 x, xs = expression.operands
                 ys = evaluate(xs, context)
                 ys.append(evaluate(x, context))
-                return ys
+                yield ys
             elif expression.operator == Atom("+"):
                 i, j = expression.operands
                 result = str(evaluate_one(i) + evaluate_one(j))
-                return Atom(result)
+                yield Atom(result)
             elif expression.operator == Atom("-"):
                 i, j = expression.operands
                 result = str(evaluate_one(i) - evaluate_one(j))
-                return Atom(result)
+                yield Atom(result)
             elif expression.operator == Atom("*"):
                 i, j = expression.operands
                 result = str(evaluate_one(i) * evaluate_one(j))
-                return Atom(result)
+                yield Atom(result)
             elif expression.operator == Atom("=="):
                 x, y = expression.operands
-                if x == y:
-                    return TRUE
-                else:
-                    return FALSE
+                yield TRUE if x == y else FALSE
             else:
                 try:
                     procedure = context.find(expression.operator)[expression.operator]
                 except NameError:
                     procedure = expression.operator
-                return procedure(*expression.operands)
+                yield _reduce(procedure(*expression.operands), context)
         else:
-            return Combination([_reduce(element, context)
-                                for element in expression.elements])
-        
-def reduce(expression, context):
-    last_expression = expression
-    while True:
-        expression = _reduce(expression, context)
-        if expression == last_expression:
-            return expression
-        last_expression = expression
+            yield _reduce(Combination([reduce(element, context)
+                                       for element in expression.elements]), context)
+reduce = tail_recursive(_reduce)
 
 
 def evaluate_one(expression):
