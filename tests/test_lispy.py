@@ -2,8 +2,8 @@ import operator
 
 import pytest
 
-from interpreter import interpret
-from context import Context
+from lispy.interpreter import interpret
+from lispy.context import Context
 
 
 @pytest.fixture(params=["2", "(+ 2 2)"])
